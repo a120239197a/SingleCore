@@ -2273,6 +2273,44 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolM
                         currentAbsorb = max_absorb;
                     break;
                 }
+                // Light Essence and Dark Essence (Trial of the Crusader, Twin Val'kyr encounter)
+                if (spellProto->SpellIconID == 2206 ||
+                    spellProto->SpellIconID == 2845)
+                {
+                    uint32 max_stacks = damage / 1000;
+                    for (uint32 itr = 0; itr < max_stacks; ++itr)
+                    {
+                        CastSpell(this, 67590, true, NULL, *i);
+                        uint32 uiSpell = 67590;
+                        if (Map* pMap = GetMap())
+                        {
+                            switch (pMap->GetDifficulty())
+                            {
+                                case RAID_DIFFICULTY_25MAN_NORMAL:
+                                    uiSpell = 67602;
+                                    break;
+                                case RAID_DIFFICULTY_10MAN_HEROIC:
+                                    uiSpell = 67603;
+                                    break;
+                                case RAID_DIFFICULTY_25MAN_HEROIC:
+                                    uiSpell = 67604;
+                                    break;
+                            }
+                        }
+                        if (Aura* pAur = GetAura(uiSpell, EFFECT_INDEX_0))
+                        {
+                            if (SpellAuraHolderPtr pHolder = pAur->GetHolder())
+                            {
+                                if (pHolder->GetStackAmount() >= 100)
+                                {
+                                    RemoveAurasDueToSpell(uiSpell);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
                 break;
             }
             case SPELLFAMILY_DRUID:
@@ -9800,7 +9838,55 @@ void Unit::AddThreat(Unit* pVictim, float threat /*= 0.0f*/, bool crit /*= false
 {
     // Only mobs can manage threat lists
     if (CanHaveThreatList())
+    {
+        if (threatSpell && pVictim && pVictim->GetTypeId() == TYPEID_PLAYER)
+        {
+            float bonus = 1.0f;
+ 
+            switch (threatSpell->SpellFamilyName)
+            {
+                case SPELLFAMILY_WARRIOR:
+                {
+                    // Heroic Throw
+                    if (threatSpell->Id == 57755)
+                        bonus = 1.5f;
+
+                    // Thunder Clap
+                    if (threatSpell->SpellFamilyFlags.test<CF_WARRIOR_THUNDER_CLAP>())
+                        bonus = 1.85f;
+
+                    // Devastate
+                    if (threatSpell->SpellFamilyFlags.test<CF_WARRIOR_DEVASTATE>())
+                        bonus = 5.0f;
+                    break;
+                }
+                case SPELLFAMILY_DEATHKNIGHT:
+                {
+                    // Rune Strike
+                    if (threatSpell->SpellFamilyFlags.test<CF_DEATHKNIGHT_RUNE_STRIKE>())
+                        bonus = 1.75f;
+
+                    // Death and Decay
+                    if (threatSpell->Id == 52212)
+                        bonus = 1.9f;
+
+                    // Icy Touch
+                    if (pVictim->HasAura(48263) && threatSpell->SpellFamilyFlags.test<CF_DEATHKNIGHT_ICY_TOUCH_TALONS>())
+                        bonus = 7.0f;
+                    break;
+                }
+                case SPELLFAMILY_DRUID:
+                {   
+                    // Swipe (bear)
+                    if (threatSpell->SpellFamilyFlags.test<CF_DRUID_SWIPE>())
+                        bonus = 1.5f;
+                    break;
+                }
+            }
+            threat *= bonus;
+        }
         m_ThreatManager.addThreat(pVictim, threat, crit, schoolMask, threatSpell);
+    }
 }
 
 //======================================================================

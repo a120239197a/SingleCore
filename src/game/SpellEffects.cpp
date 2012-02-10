@@ -1698,6 +1698,24 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(unitTarget, roll_chance_i(50) ? 28059 : 28084, true, 0, 0, m_caster->GetObjectGuid());
                     break;
                 }
+                case 28136:                                 // Spell Lightning Visual (Thaddius)
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
+                        return;
+
+                    ((Creature*)unitTarget)->SetInCombatWithZone();
+                    break;
+                }
+                case 28159:                                 // Spell Shock Overload (Thaddius)
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->RemoveAurasDueToSpell(28160);         // Remove stun
+                    unitTarget->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    unitTarget->CastSpell(unitTarget, 28136, true);   // cast Lightning Effect
+                    break;
+                }
                 case 29200:                                 // Purify Helboar Meat
                 {
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
@@ -2772,6 +2790,12 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, 52661, true);     // Summon Temper
                     m_caster->CastSpell(unitTarget, 52654, false);  // Temper 2 Vokhan Deal Two Strike
 
+                    return;
+                }
+                case 52480:                                 // Salram Explode Ghoul N
+                case 58825:                                 // Salram Explode Ghoul H
+                {
+                    unitTarget->SetDisplayId(11686);
                     return;
                 }
                 case 52654:                                  // Volkhan Temper 2, Summon Golems
@@ -9713,6 +9737,32 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(unitTarget, 67532, true);
                     return;
                 }
+                case 67590:                                 // Powering Up (Trial of the Crusader, Twin Val'kyr encounter)
+                case 67602:
+                case 67603:
+                case 67604:
+                {
+                    if (!unitTarget)
+                        return;
+
+                    if (Aura* pAur = unitTarget->GetAura(m_spellInfo->Id, EFFECT_INDEX_0))
+                    {
+                        if (SpellAuraHolderPtr pHolder = pAur->GetHolder())
+                        {
+                            if (pHolder->GetStackAmount() >= 99)
+                            {
+                                uint32 uiSpell = 0;
+                                if (unitTarget->HasAuraOfDifficulty(65684))
+                                    uiSpell = 65724;
+                                else if (unitTarget->HasAuraOfDifficulty(65686))
+                                    uiSpell = 65748;
+                                
+                                unitTarget->CastSpell(unitTarget, uiSpell, true);
+                            }
+                        }
+                    }
+                    return;
+                }
                 case 68861:                                 // Consume Soul (ICC FoS: Bronjahm)
                 {
                     if (unitTarget)
@@ -9857,27 +9907,23 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         unitTarget->CastSpell(unitTarget, 66334, true);
                     return;
                 }
-                case 69057:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 70826:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 72088:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 72089:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 73142:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 73143:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 73144:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 73145:                                 // Bone Spike Graveyard (Lord Marrowgar)
+                case 69057:                                 // Bone Spike Graveyard (Icecrown Citadel, ->
+                case 70826:                                 // -> Lord Marrowgar encounter, all difficulties)
+                case 72088:                                 // ----- // -----
+                case 72089:                                 // ----- // -----
+                case 73142:                                 // Bone Spike Graveyard (during Bone Storm) ->
+                case 73143:                                 // (Icecrown Citadel, -> Lord Marrowgar encounter, ->
+                case 73144:                                 // all difficulties)
+                case 73145:                                 // ----- // -----
                 {
                     if (unitTarget)
-                    {
-                        float x, y, z;
-                        unitTarget->GetPosition(x, y, z);
-
-                        if (Creature *pSpike = unitTarget->SummonCreature(38711, x, y, z, 0.0f, TEMPSUMMON_DEAD_DESPAWN, 2000))
-                        {
-                            unitTarget->CastSpell(pSpike, 46598, true); // enter vehicle
-                            pSpike->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1), true, 0, 0, m_caster->GetObjectGuid(), m_spellInfo);
-                        }
-                    }
-
+                        unitTarget->CastSpell(unitTarget, 69062, true);
+                    return;
+                }
+                case 69140:                                 // Coldflame (Lord Marrowgar - Icecrown Citadel)
+                {
+                    if (unitTarget)
+                        unitTarget->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(eff_idx), true);
                     return;
                 }
                 case 69147:                                 // Coldflame (circle, Lord Marrowgar - Icecrown Citadel)
