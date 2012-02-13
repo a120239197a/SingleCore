@@ -4013,6 +4013,10 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
 
     if (apply)
     {
+        // RP Morph System
+        if (target->GetTypeId() == TYPEID_PLAYER && ((Player*)target)->GetRP_scale() != 1)
+            target->SetObjectScale(DEFAULT_OBJECT_SCALE);
+
         // remove other shapeshift before applying a new one
         target->RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT, GetHolder());
 
@@ -4125,6 +4129,10 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
     }
     else
     {
+        // RP Morph System
+        if (target->GetTypeId() == TYPEID_PLAYER && ((Player*)target)->GetRP_scale() != 1)
+            target->SetObjectScale(DEFAULT_OBJECT_SCALE * ((Player*)target)->GetRP_scale());
+
         if (modelid > 0)
             target->SetDisplayId(target->GetNativeDisplayId());
         if (target->getClass() == CLASS_DRUID)
@@ -4200,6 +4208,10 @@ void Aura::HandleAuraTransform(bool apply, bool Real)
         // update active transform spell only when transform or shapeshift not set or not overwriting negative by positive case
         if (target->GetModelForForm() && IsPositiveSpell(GetId()))
             break;
+
+        // RP Morph System
+        if (target->GetTypeId() == TYPEID_PLAYER && ((Player*)target)->GetRP_scale() != 1)
+            target->SetObjectScale(DEFAULT_OBJECT_SCALE);
 
         // special case (spell specific functionality)
         if (m_modifier.m_miscvalue == 0)
@@ -4471,6 +4483,10 @@ void Aura::HandleAuraTransform(bool apply, bool Real)
     }
     else
     {
+        // RP Morph System
+        if (target->GetTypeId() == TYPEID_PLAYER && ((Player*)target)->GetRP_scale() != 1)
+            target->SetObjectScale(DEFAULT_OBJECT_SCALE * ((Player*)target)->GetRP_scale());
+
         // ApplyModifier(true) will reapply it if need
         target->setTransForm(0);
         target->SetDisplayId(target->GetNativeDisplayId());

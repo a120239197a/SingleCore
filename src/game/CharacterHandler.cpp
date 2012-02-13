@@ -75,7 +75,7 @@ bool LoginQueryHolder::Initialize()
         "position_x, position_y, position_z, map, orientation, taximask, cinematic, totaltime, leveltime, rest_bonus, logout_time, is_logout_resting, resettalents_cost,"
         "resettalents_time, trans_x, trans_y, trans_z, trans_o, transguid, extra_flags, stable_slots, at_login, zone, online, death_expire_time, taxi_path, dungeon_difficulty,"
         "arenaPoints, totalHonorPoints, todayHonorPoints, yesterdayHonorPoints, totalKills, todayKills, yesterdayKills, chosenTitle, knownCurrencies, watchedFaction, drunk,"
-        "health, power1, power2, power3, power4, power5, power6, power7, specCount, activeSpec, exploredZones, equipmentCache, ammoId, knownTitles, actionBars, grantableLevels FROM characters WHERE guid = '%u'", m_guid.GetCounter());
+        "health, power1, power2, power3, power4, power5, power6, power7, specCount, activeSpec, exploredZones, equipmentCache, ammoId, knownTitles, actionBars, grantableLevels, RP_model, RP_scale, RP_speed_run FROM characters WHERE guid = '%u'", m_guid.GetCounter());
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADGROUP,           "SELECT groupId FROM group_member WHERE memberGuid ='%u'", m_guid.GetCounter());
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADBOUNDINSTANCES,  "SELECT id, permanent, map, difficulty, extend, resettime FROM character_instance LEFT JOIN instance ON instance = id WHERE guid = '%u'", m_guid.GetCounter());
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADAURAS,           "SELECT caster_guid,item_guid,spell,stackcount,remaincharges,basepoints0,basepoints1,basepoints2,periodictime0,periodictime1,periodictime2,maxduration,remaintime,effIndexMask FROM character_aura WHERE guid = '%u'", m_guid.GetCounter());
@@ -259,6 +259,26 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
                 SendPacket( &data );
                 return;
             }
+        }
+
+        uint32 allowable_races_mask = 0, allowable_classes_mask = 0;
+
+        QueryResult* result = LoginDatabase.PQuery("SELECT allowable_races, allowable_classes FROM account WHERE id='%u'", GetAccountId());
+        if (result)
+        {
+            Field* fields = result->Fetch();
+            allowable_races_mask = fields[0].GetUInt32();
+            allowable_classes_mask = fields[1].GetUInt32();
+            delete result;
+        }
+
+        bool creation_enabled = (allowable_races_mask & (1 << (race_ - 1))) && (allowable_classes_mask & (1 << (class_ - 1)));
+
+        if (!creation_enabled)
+        {
+            data << (uint8)CHAR_CREATE_FAILED;
+            SendPacket( &data );
+            return;
         }
     }
 

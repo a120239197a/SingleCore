@@ -3840,6 +3840,205 @@ bool ChatHandler::HandleGetDistanceCommand(char* args)
     return true;
 }
 
+//RP Morph System, chat command rpmorph
+bool ChatHandler::HandleRPMorphCommand(char* args)
+{
+    if (!*args)
+        return false;
+
+    uint16 display_id = (uint16)atoi(args);
+
+    Unit* target = getSelectedUnit();
+
+    if (!target)
+        target = m_session->GetPlayer();
+
+    if (target->GetTypeId() != TYPEID_PLAYER)
+    {
+        SendSysMessage(LANG_NO_CHAR_SELECTED);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    // check online security
+    if (HasLowerSecurity((Player*)target))
+    {
+        SendSysMessage("Target has higher GM level, then you.");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    ((Player*)target)->SetRP_model(display_id);
+    ((Player*)target)->InitDisplayIds();
+    ((Player*)target)->SaveToDB();
+
+    return true;
+}
+
+//RP Morph System, chat command rpdemorph
+bool ChatHandler::HandleRPDeMorphCommand(char* /*args*/)
+{
+    Unit* target = getSelectedUnit();
+
+    if (!target)
+        target = m_session->GetPlayer();
+
+    if (target->GetTypeId() != TYPEID_PLAYER)
+    {
+        SendSysMessage(LANG_NO_CHAR_SELECTED);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    // check online security
+    if (HasLowerSecurity((Player*)target))
+    {
+        SendSysMessage("Target has higher GM level, then you.");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    ((Player*)target)->SetRP_model(0);
+    ((Player*)target)->InitDisplayIds();
+    ((Player*)target)->SaveToDB();
+
+    return true;
+}
+
+//RP Morph System, chat command rpscale
+bool ChatHandler::HandleRPScaleCommand(char* args)
+{
+    if (!*args)
+        return false;
+
+    float Scale = (float)atof(args);
+
+    Unit* target = getSelectedUnit();
+
+    if (!target)
+        target = m_session->GetPlayer();
+
+    if (target->GetTypeId() != TYPEID_PLAYER)
+    {
+        SendSysMessage(LANG_NO_CHAR_SELECTED);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    // check online security
+    if (HasLowerSecurity((Player*)target))
+    {
+        SendSysMessage("Target has higher GM level, then you.");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    ((Player*)target)->SetRP_scale(Scale);
+    ((Player*)target)->InitDisplayIds();
+    ((Player*)target)->SaveToDB();
+
+    return true;
+}
+
+//RP Morph System, chat command rpspeedrun
+bool ChatHandler::HandleRPSpeedRunCommand(char* args)
+{
+    if (!*args)
+        return false;
+
+    float Speed = (float)atof(args);
+
+    Unit* target = getSelectedUnit();
+
+    if (!target)
+        target = m_session->GetPlayer();
+
+    if (target->GetTypeId() != TYPEID_PLAYER)
+    {
+        SendSysMessage(LANG_NO_CHAR_SELECTED);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    // check online security
+    if (HasLowerSecurity((Player*)target))
+    {
+        SendSysMessage("Target has higher GM level, then you.");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    ((Player*)target)->SetRP_speed_run(Speed);
+    ((Player*)target)->UpdateSpeed(MOVE_RUN, true);
+    ((Player*)target)->SaveToDB();
+
+    return true;
+}
+
+bool ChatHandler::HandleRPAllowCommand(char* args)
+{
+    if (!*args)
+    {
+        SendSysMessage("Usage: .rpdallow ACCOUNT_NAME");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    std::string safe_account = args;
+    LoginDatabase.escape_string(safe_account);
+    QueryResult* result = LoginDatabase.PQuery("SELECT * FROM account WHERE username = '%s'", safe_account.c_str());
+    if (!result)
+    {
+        SendSysMessage("Account does not exist.");
+        SendSysMessage("Usage: .rpdisallow ACCOUNT_NAME");
+        return false;
+    }
+
+    if (LoginDatabase.PExecute("UPDATE `account` SET `rp_allow` = 1 WHERE `username` = '%s'", safe_account.c_str()))
+    {
+        SendSysMessage("RP realm was successfully unlocked for this account.");
+        return true;
+    }
+    {
+        SendSysMessage("RP realm was not unlocked for this account. Something gone wrong...");
+        return false;
+    }
+    
+    return false;
+}
+
+bool ChatHandler::HandleRPDisallowCommand(char* args)
+{
+    if (!*args)
+    {
+        SendSysMessage("Usage: .rpdisallow ACCOUNT_NAME");
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    std::string safe_account = args;
+    LoginDatabase.escape_string(safe_account);
+    QueryResult* result = LoginDatabase.PQuery("SELECT * FROM account WHERE username = '%s'", safe_account.c_str());
+    if (!result)
+    {
+        SendSysMessage("Account does not exist.");
+        SendSysMessage("Usage: .rpdisallow ACCOUNT_NAME");
+        return false;
+    }
+
+    if (LoginDatabase.PExecute("UPDATE `account` SET `rp_allow` = 0 WHERE `username` = '%s'", safe_account.c_str()))
+    {
+        SendSysMessage("RP realm was successfully locked for this account.");
+        return true;
+    }
+    {
+        SendSysMessage("RP realm was not locked for this account. Something gone wrong...");
+        return false;
+    }
+    
+    return false;
+}
+
 bool ChatHandler::HandleDieCommand(char* /*args*/)
 {
     Unit* target = getSelectedUnit();
