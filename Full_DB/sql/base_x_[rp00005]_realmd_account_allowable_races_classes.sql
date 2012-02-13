@@ -1,5 +1,5 @@
-ALTER TABLE account ADD COLUMN allowable_races int(10) UNSIGNED NOT NULL default 10 AFTER rp_allow;
-ALTER TABLE account ADD COLUMN allowable_classes int(10) UNSIGNED NOT NULL default 13 AFTER allowable_races;
+ALTER TABLE account ADD COLUMN allowable_races int(10) UNSIGNED NOT NULL default 1791 AFTER rp_allow;
+ALTER TABLE account ADD COLUMN allowable_classes int(10) UNSIGNED NOT NULL default 1791 AFTER allowable_races;
 
 /*
 allowable_races and allowable_classes - bitmasks
